@@ -23,7 +23,7 @@ public class bankStatementProcessor {
 		StringBuilder bankStatementsDetails = new StringBuilder();
 		try {
 			//when importing the xlsx file from bank make sure to clean the file and delete empty columns otherwise it will not read the file correctly
-			FileInputStream xlsFile = new FileInputStream("C:\\Users\\Daniel\\Desktop\\2024innovativeLiving.xlsx");
+			FileInputStream xlsFile = new FileInputStream("YOUR_XLSX_FILE");
 			Workbook wb = WorkbookFactory.create(xlsFile);
 			Sheet sheet = wb.getSheetAt(0);
 			
