@@ -21,7 +21,7 @@ public class tenantManager {
 	public String loadTenants() throws FileNotFoundException {
 		StringBuilder tenantInfo = new StringBuilder();
 		
-		File inputFile = new File("C:\\Users\\Daniel\\Desktop\\tenantInfo.txt");
+		File inputFile = new File("YOUR_TENANT_TXT_FILE");
 		Scanner fileScanner = new Scanner(inputFile);
 		
 		while(fileScanner.hasNextLine()) {
@@ -88,7 +88,7 @@ public class tenantManager {
 		refTenantName = refTenantName.trim().toUpperCase();
 		//add tenant info the correct position on the tenantInfo.txt
 		try {
-			File inputFile = new File("C:\\Users\\Daniel\\Desktop\\tenantInfo.txt");
+			File inputFile = new File("YOUR_TENANT_TXT_FILE");
 			Scanner fileScanner = new Scanner(inputFile);
 			
 			while(fileScanner.hasNextLine()) {
@@ -109,7 +109,7 @@ public class tenantManager {
 			tenant addedTenant = new tenant(fName,lName, refTenantName, property, rentAmount, phoneNumber, currentTenantStatus);
 			
 			//append tenant to file
-			FileWriter outputFile = new FileWriter("C:\\Users\\Daniel\\Desktop\\tenantInfo.txt",true);
+			FileWriter outputFile = new FileWriter("YOUR_TENANT_TXT_FILE",true);
 			BufferedWriter bw = new BufferedWriter(outputFile);
 			
 			bw.write(addedTenant.toCSV());
