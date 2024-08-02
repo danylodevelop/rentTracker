@@ -1,8 +1,8 @@
 # rentTracker
--checks imported xlsx/xls bank statement file and matches it to the tenant to check rental payments. 
--add tenants to the tenant file
--check tenant info such as property/contact info / rent Amount
--check general bank statement info such as viewo only moneyIn
+- checks imported xlsx/xls bank statement file and matches it to the tenant to check rental payments.
+- add tenants to the tenant file
+- check tenant info such as property/contact info / rent Amount
+- check general bank statement info such as viewo only moneyIn
 
 NOTES:
 - Make sure when you import the bank statement as an xls file you clean the format of the file up e.g remove the empty columns that may separate the needed data. (this should only take a few min).
