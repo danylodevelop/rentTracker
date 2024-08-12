@@ -8,6 +8,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.util.*;
 
 public class tenantManager {
@@ -21,7 +22,7 @@ public class tenantManager {
 	public String loadTenants() throws FileNotFoundException {
 		StringBuilder tenantInfo = new StringBuilder();
 		
-		File inputFile = new File("YOUR_TENANT_TXT_FILE");
+		File inputFile = new File("C:\\Users\\Daniel\\Desktop\\tenantInfo.txt");
 		Scanner fileScanner = new Scanner(inputFile);
 		
 		while(fileScanner.hasNextLine()) {
@@ -55,6 +56,34 @@ public class tenantManager {
 		return tenantInfo.toString();
 	}
 	
+	public void loadTenantsVOID() throws FileNotFoundException {
+		
+		File inputFile = new File("C:\\Users\\Daniel\\Desktop\\tenantInfo.txt");
+		Scanner fileScanner = new Scanner(inputFile);
+		
+		while(fileScanner.hasNextLine()) {
+			String line = fileScanner.nextLine();
+			String [] parts = line.split(",");
+			
+			if(parts.length >=7 ) {
+				String fName = parts[0].trim();
+				String lName = parts[1].trim();
+				String refName = parts[2].trim().toUpperCase();
+				properties property = properties.valueOf(parts[3].trim().toUpperCase());
+				int rentAmount = Integer.parseInt(parts[4].trim());
+				String phoneNum = parts[5].trim();
+				tenantStatus tenantStat = tenantStatus.valueOf(parts[6].trim().toUpperCase());
+			
+				tenant tenantObj = new tenant(fName,lName,refName,property,rentAmount,phoneNum,tenantStat);
+				
+				this.tenants.add(tenantObj);
+			
+			}	
+		}
+		fileScanner.close();
+
+	}
+	
 	// the tenant reference name is passed is and search through tenant array list and if found the tenant information is returned otherwise an error message is returned
 	public String findTenant(String tenantRefName) {
 		StringBuilder tenantDetails = new StringBuilder();
@@ -81,14 +110,15 @@ public class tenantManager {
 		//validate inputs
 		boolean successAddition = false;
 		
-		if (fName == null || lName == null || refTenantName == null || property == null || phoneNumber == null || currentTenantStatus == null) {
-            throw new IllegalArgumentException("All tenant details must be provided");
+		if (fName == "" || lName == "" || refTenantName == ""|| property == null || phoneNumber == "" || currentTenantStatus == null) {
+			JOptionPane.showMessageDialog(null, "All tenant details must be provided", "Error", JOptionPane.ERROR_MESSAGE);
+			return successAddition;
         }
 		
 		refTenantName = refTenantName.trim().toUpperCase();
 		//add tenant info the correct position on the tenantInfo.txt
 		try {
-			File inputFile = new File("YOUR_TENANT_TXT_FILE");
+			File inputFile = new File("C:\\Users\\Daniel\\Desktop\\tenantInfo.txt");
 			Scanner fileScanner = new Scanner(inputFile);
 			
 			while(fileScanner.hasNextLine()) {
@@ -109,7 +139,7 @@ public class tenantManager {
 			tenant addedTenant = new tenant(fName,lName, refTenantName, property, rentAmount, phoneNumber, currentTenantStatus);
 			
 			//append tenant to file
-			FileWriter outputFile = new FileWriter("YOUR_TENANT_TXT_FILE",true);
+			FileWriter outputFile = new FileWriter("C:\\Users\\Daniel\\Desktop\\tenantInfo.txt",true);
 			BufferedWriter bw = new BufferedWriter(outputFile);
 			
 			bw.write(addedTenant.toCSV());
@@ -120,9 +150,11 @@ public class tenantManager {
 			this.tenants.add(addedTenant);
 			successAddition = true;
 			
-		}catch(Exception e) {
+		}catch(IOException e) {
 			System.out.println("tenantInfo.txt catch block");
 			e.printStackTrace();
+		}catch(NumberFormatException e) {
+			JOptionPane.showMessageDialog(null, "Please Enter Valid Tenant Details", "Error", JOptionPane.ERROR_MESSAGE);
 		}
 		return successAddition;
 	}

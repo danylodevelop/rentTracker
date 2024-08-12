@@ -1,14 +1,14 @@
 package rentTracker;
 
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
-
 import javax.swing.JOptionPane;
-
 import org.apache.poi.ss.usermodel.*;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+
 
 public class bankStatementProcessor {
 	private List<bankStatement> bankStatements;
@@ -23,7 +23,7 @@ public class bankStatementProcessor {
 		StringBuilder bankStatementsDetails = new StringBuilder();
 		try {
 			//when importing the xlsx file from bank make sure to clean the file and delete empty columns otherwise it will not read the file correctly
-			FileInputStream xlsFile = new FileInputStream("YOUR_XLSX_FILE");
+			FileInputStream xlsFile = new FileInputStream("C:\\Users\\Daniel\\Desktop\\2024innovativeLiving.xlsx");
 			Workbook wb = WorkbookFactory.create(xlsFile);
 			Sheet sheet = wb.getSheetAt(0);
 			
@@ -129,23 +129,38 @@ public class bankStatementProcessor {
 		return bankStatementsDetails.toString();
 	}
 	
-	//takes the statements that only have moneyIn>0 and add its to the new array list
-	public String filterMoneyIn(){
-		//List<bankStatement> filteredList = new ArrayList<>();
-		StringBuilder moneyInList = new StringBuilder();
-		for (bankStatement statement : bankStatements) {
-			if(statement.getMoneyIn() > 0) {
-				//filteredList.add(statement);
-				moneyInList.append(statement);
+	//takes the statements of a selected month and only returns the expenses (money out of that month)
+	public String findSelectedMonthExpense(String selectedDate){
+		StringBuilder ExpenseList = new StringBuilder();
+		try {
+			
+			for (bankStatement statement : bankStatements) {
+				String statementMonthYear = statement.getDate().substring(3,10);
+				
+				if (statementMonthYear.equals(selectedDate) && statement.getMoneyOut() >0) {
+					ExpenseList.append(statement);
+				}
 			}
+			}catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+			}
+		if (ExpenseList.length() == 0) {
+			JOptionPane.showMessageDialog(null,"No Expenses Have Been Found For This Month", "Error", JOptionPane.ERROR_MESSAGE);
 		}
 		
-		return moneyInList.toString();
+		return ExpenseList.toString();
 	}
 	
 	//a reference name (usually their surname) of tenant is passed in an compared to the list of bank statements and bank statements with the corresponding tenant name in the reference are added to payments list and then returned
 	public String findPaymentsForTenant(String refTenantName){
 		refTenantName = refTenantName.toUpperCase().replaceAll("\\s+",""); // make uppercase and remove all whitespace
+		
+		if (refTenantName.equals(" ") || refTenantName.equals("")) {
+			JOptionPane.showMessageDialog(null, "Please Enter A Valid Reference Name", "Error", JOptionPane.ERROR_MESSAGE);
+			return "";
+		}
+		
 		List<bankStatement> payments = new ArrayList<>();
 		StringBuilder tenantPaymentList = new StringBuilder();
 		
@@ -160,6 +175,43 @@ public class bankStatementProcessor {
 			JOptionPane.showMessageDialog(null, refTenantName + " Has Not Been Found In Our Bank Statements.", "Error", JOptionPane.ERROR_MESSAGE);
 		}
 		return tenantPaymentList.toString();
+	}
+	
+	// date input is passed in and only months from that date is selected with money IN and only being money in from tenants (rental payments) will be outputted 
+	public String findSelectedMonthRent(String selectedDate) {
+		StringBuilder monthRentList = new StringBuilder();
+		try {
+			tenantManager tm = new tenantManager();
+			tm.loadTenantsVOID();
+			ArrayList<String> refNames = new ArrayList<String>();
+			// Collect all tenant reference names
+			for(tenant tenant : tm.getTenants()) {
+				refNames.add(tenant.getRefTenantName().toUpperCase());
+			}
+			
+			
+			for (bankStatement statement : bankStatements) {
+				String statementMonthYear = statement.getDate().substring(3,10);
+				// Check if the statement matches the selected month and contains money in
+				if (statement.getMoneyIn()> 0 && statementMonthYear.equals(selectedDate)) {
+					// Check if the statement's description contains any tenant reference name
+					for(String refName : refNames) {
+						if (statement.getDescription().toUpperCase().contains(refName)) {
+							monthRentList.append(statement);
+							
+						}
+					}
+				}
+			}
+			}catch (FileNotFoundException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+			}
+		if (monthRentList.length() == 0) {
+			JOptionPane.showMessageDialog(null,"No Rent Payments Have Been Found For This Month", "Error", JOptionPane.ERROR_MESSAGE);
+		}
+		
+		return monthRentList.toString();
 	}
 	
 	//getter methods

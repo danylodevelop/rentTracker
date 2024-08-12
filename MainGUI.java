@@ -1,20 +1,40 @@
 package rentTracker;
 import java.io.FileNotFoundException;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import javax.swing.*;
+import javax.swing.text.MaskFormatter;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+
 
 public class MainGUI extends JFrame{
 	
 	private bankStatementProcessor bankStatementProcessor;
     private tenantManager tenantManager;
+    private String tenantData;
 	
 	public MainGUI(bankStatementProcessor bankStatementProcessor,tenantManager tenantManager) {
 		this.bankStatementProcessor = bankStatementProcessor;
         this.tenantManager = tenantManager;
 		initComponenets(bankStatementProcessor,tenantManager);
+		
+		initialise();
 	}
+	
+	public void initialise() {
+        try {
+            bankStatementProcessor.loadBankStatements();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 	
 	private void initComponenets(bankStatementProcessor bankStatementProcessor,tenantManager tenantManager) {
 		
@@ -23,12 +43,11 @@ public class MainGUI extends JFrame{
 		setVisible(true);
 		
 		JButton viewAllTenants = new JButton("View All Tenants");
-		JButton viewAllBankStatements = new JButton("View All Bank Statements");
-		JButton viewMoneyIn = new JButton("Filter Money In Bank Statements");
+		JButton viewSelectMonthExpense = new JButton("View Expenses For Selected Month"); //was filter money in 
 		JButton addTenant = new JButton("Add A New Tenant");
 		JButton viewTenantInfo = new JButton("View Tenant Info");
 		JButton viewTenantRentPayment = new JButton("View Tenant Rent Payments");
-		
+		JButton viewSelectMonthPayments = new JButton("View A Selected Month Rent Payments");
 		
 		JTextArea outputTextArea = new JTextArea(30,60);
 		outputTextArea.setEditable(false);//make it non-editable
@@ -37,11 +56,11 @@ public class MainGUI extends JFrame{
 		
 		JPanel buttonPanel = new JPanel(new GridLayout(4,2));
 		buttonPanel.add(viewAllTenants);
-		buttonPanel.add(viewAllBankStatements);
-		buttonPanel.add(viewMoneyIn);
+		buttonPanel.add(viewSelectMonthExpense);
 		buttonPanel.add(addTenant);
 		buttonPanel.add(viewTenantInfo);
 		buttonPanel.add(viewTenantRentPayment);
+		buttonPanel.add(viewSelectMonthPayments);
 		
 		// Add the panels to the frame
         add(buttonPanel, BorderLayout.NORTH);
@@ -55,8 +74,9 @@ public class MainGUI extends JFrame{
         	public void actionPerformed(ActionEvent e) {
         		try {
 					outputTextArea.setText(tenantManager.loadTenants());
-				} catch (FileNotFoundException err) {
-					err.printStackTrace();
+				} catch (FileNotFoundException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
 				}
         	}
         });
@@ -66,18 +86,19 @@ public class MainGUI extends JFrame{
         	public void actionPerformed(ActionEvent e) {
         		
         		//create input field for tenant ref name
-        		JTextField refTenantField = new JTextField(15);
+        		JComboBox<String> refTenantBox = new JComboBox<> (tenantRefNameList().toArray(new String[0]));
         		
         		JPanel inputPanel = new JPanel(new GridLayout(0,2));
-        		inputPanel.add(new JLabel("Enter Tenant's Surname / Reference Name: "));
-        		inputPanel.add(refTenantField);
+        		inputPanel.add(new JLabel("Select Tenant's Surname / Reference Name: "));
+        		inputPanel.add(refTenantBox);
         		
         		// if confirmed perform the findTenant function with the inputted ref name
         		int result = JOptionPane.showConfirmDialog(null, inputPanel, "Find Tenant", JOptionPane.OK_CANCEL_OPTION);
         		if(result == JOptionPane.OK_OPTION) {
         			try {
-						tenantManager.loadTenants();
-						outputTextArea.setText(tenantManager.findTenant(refTenantField.getText()));
+        				String selectTenant = refTenantBox.getSelectedItem().toString();
+						tenantManager.loadTenantsVOID();
+						outputTextArea.setText(tenantManager.findTenant(selectTenant));
 					} catch (FileNotFoundException e1) {
 						// TODO Auto-generated catch block
 						e1.printStackTrace();
@@ -85,30 +106,28 @@ public class MainGUI extends JFrame{
         		}
         	}
         });
-        
-        viewAllBankStatements.addActionListener(new ActionListener() {
+       
+        viewSelectMonthExpense.addActionListener(new ActionListener() {
         	@Override
         	public void actionPerformed(ActionEvent e) {
-        		try {
-					outputTextArea.setText(bankStatementProcessor.loadBankStatements());
-				} catch (FileNotFoundException err) {
-					err.printStackTrace();
-				} catch (Exception e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
-        	}
-        });
-        
-        viewMoneyIn.addActionListener(new ActionListener() {
-        	@Override
-        	public void actionPerformed(ActionEvent e) {
-        		try {
-        			bankStatementProcessor.loadBankStatements();
-					outputTextArea.setText(bankStatementProcessor.filterMoneyIn());
-				} catch (FileNotFoundException err) {
-					err.printStackTrace();
-				} catch (Exception e1) {
+        		
+        		MaskFormatter dateFormatter;
+				try {
+					dateFormatter = new MaskFormatter("##/####");
+		            dateFormatter.setPlaceholderCharacter('_');
+		            JFormattedTextField txtDate = new JFormattedTextField(dateFormatter);
+					
+					JPanel inputPanel = new JPanel(new GridLayout(0,2));
+					inputPanel.add(new JLabel("Enter The Date For the Month (MM/yyyy): "));
+					inputPanel.add(txtDate);
+		    		
+					int result = JOptionPane.showConfirmDialog(null, inputPanel, "Find Expenses For Selected Month", JOptionPane.OK_CANCEL_OPTION);
+		    		if(result == JOptionPane.OK_OPTION) {
+	    				String dateInput = txtDate.getText();
+	    				outputTextArea.setText(bankStatementProcessor.findSelectedMonthExpense(dateInput));
+		    			
+		    		}
+				} catch (ParseException e1) {
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
 				}
@@ -120,19 +139,20 @@ public class MainGUI extends JFrame{
         	public void actionPerformed(ActionEvent e) {
         		
         		//create input field for tenant ref name
-        		JTextField refTenantField = new JTextField(15);
+        		//JTextField refTenantField = new JTextField(15);
+        		JComboBox<String> refTenantBox = new JComboBox<> (tenantRefNameList().toArray(new String[0]));
         		
         		JPanel inputPanel = new JPanel(new GridLayout(0,2));
-        		inputPanel.add(new JLabel("Enter Tenant's Surname / Reference Name: "));
-        		inputPanel.add(refTenantField);
+        		inputPanel.add(new JLabel("Select Tenant's Surname / Reference Name: "));
+        		//inputPanel.add(refTenantField);
+        		inputPanel.add(refTenantBox);
         		
         		// if confirmed perform the findTenant function with the inputted ref name
         		int result = JOptionPane.showConfirmDialog(null, inputPanel, "Find Tenant", JOptionPane.OK_CANCEL_OPTION);
         		if(result == JOptionPane.OK_OPTION) {
         			try {
-						bankStatementProcessor.loadBankStatements();
-						tenantManager.loadTenants();
-						outputTextArea.setText(bankStatementProcessor.findPaymentsForTenant(refTenantField.getText()));
+        				String selectTenant = refTenantBox.getSelectedItem().toString();
+						outputTextArea.setText(bankStatementProcessor.findPaymentsForTenant(selectTenant));
 					} catch (Exception e1) {
 						//Auto-generated catch block
 						e1.printStackTrace();
@@ -185,7 +205,9 @@ public class MainGUI extends JFrame{
         				if(tenantManager.addTenant(fName,lName,refName,property,rentAmount,phoneNum,selectTenantStatus)) {
         					outputTextArea.setText(fName +" "+ lName + " Has Been Successfully Added");
         				}
-        				
+        				else {
+        					JOptionPane.showMessageDialog(null, "Invalid Details Please Try Again", "Error", JOptionPane.ERROR_MESSAGE);
+        				}
         				
 					} catch (Exception e1) {
 						// TODO Auto-generated catch block
@@ -195,39 +217,61 @@ public class MainGUI extends JFrame{
         	}
         });
         
+        viewSelectMonthPayments.addActionListener(new ActionListener() {
+        	@Override
+        	public void actionPerformed(ActionEvent e) {
+ 
+    			
+        		MaskFormatter dateFormatter;
+				try {
+					dateFormatter = new MaskFormatter("##/####");
+		            dateFormatter.setPlaceholderCharacter('_');
+		            JFormattedTextField txtDate = new JFormattedTextField(dateFormatter);
+					
+					JPanel inputPanel = new JPanel(new GridLayout(0,2));
+					inputPanel.add(new JLabel("Enter The Date For the Month (MM/yyyy): "));
+					inputPanel.add(txtDate);
+		    		
+					int result = JOptionPane.showConfirmDialog(null, inputPanel, "Find Rent Payments For Selected Month", JOptionPane.OK_CANCEL_OPTION);
+		    		if(result == JOptionPane.OK_OPTION) {
+		    			try {
+		    				String dateInput = txtDate.getText();
+		    				outputTextArea.setText(bankStatementProcessor.findSelectedMonthRent(dateInput));
+		    				
+						} catch (Exception e1) {
+							// TODO Auto-generated catch block
+							e1.printStackTrace();
+						}
+		    		}
+				} catch (ParseException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+        	}
+        });
         
-	}	
-		
-		/*//Testing for different functions 
-		bankStatement b1 = new bankStatement("17/04/2024","Rent deez",1200,0);
-		//System.out.println(b1.toString());
-		
-		
-		tenant t1 = new tenant("John", "Doe", "J Doe",properties.BURNHAM,500,"12345678901", tenantStatus.CURRENTLY_STAYING);
-		//System.out.println(t1.toString());
-		
-		tenantManager tm = new tenantManager();
-		tm.addTenant("John", "Doe", "JD123", properties.BURNHAM, 1000, "123-456-7890", tenantStatus.CURRENTLY_STAYING);
-		
-        try {
-            tm.loadTenants();
-            tm.findTenant("mattey");
-        } catch (FileNotFoundException e) {
-            System.err.println("Tenant file not found: " + e.getMessage());
-        } 
         
-		
-		bankStatementProcessor processor = new bankStatementProcessor();
+	}
+	
+	private List<String> tenantRefNameList(){
+		ArrayList<String> tenantRefName = new ArrayList<>();
 		
 		try {
-			processor.loadBankStatements();
-			//System.out.println(processor.filterMoneyIn());
-			//System.out.println(processor.findPaymentsForTenant("PANESAR"));
-		} catch(Exception e) {
+			tenantManager.loadTenantsVOID();
+			for(tenant tenant: tenantManager.getTenants()) {
+				tenantRefName.add(tenant.getRefTenantName().trim().toUpperCase());
+			}
+			
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		*/
+		
+		return tenantRefName;
+	}
 	
+	
+		
 	public static void main(String[] args) {
 		try {
 	        for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
