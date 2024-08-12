@@ -10,5 +10,4 @@ NOTES:
 
 Future additions:
 - add dashboard to track overall rent paid each month and check it matches target
-- add view expenses button to track expense of moneyOut
 - once the rent payment for tenant has been viewed provide a option to upload this data to another xls file
